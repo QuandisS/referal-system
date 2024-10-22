@@ -1,0 +1,28 @@
+services:
+  postgres:
+    build: build/database
+    environment:
+      - POSTGRES_DB=referal
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=devpswd
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+
+  server:
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: build/server/Dockerfile
+    environment:
+      - PORT=8081
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=referal
+      - DB_USERNAME=dev
+      - DB_PASSWORD=devpswd
+      - DB_SCHEMA=public
+    ports:
+      - 8081:8081
+    restart: unless-stopped
