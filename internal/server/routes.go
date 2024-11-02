@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/markbates/goth/gothic"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -27,6 +28,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/", s.HandleIndex)
 	r.Get("/dbhealth", s.HandleDbHealth)
 	r.Get("/auth/{provider}", s.HandleProviderLogin)
+	r.Get("/auth/{provider}/callback", s.HandleProviderCallbackFunction)
 	return r
 }
 
@@ -36,18 +38,44 @@ func (s *Server) HandleIndex(w http.ResponseWriter, r *http.Request) {
 
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
+		log.Printf("error handling JSON marshal. Err: %v", err)
+		return
 	}
 
-	_, _ = w.Write(jsonResp)
+	_, err = w.Write(jsonResp)
+	if err != nil {
+		log.Printf("error writing response. Err: %v", err)
+		return
+	}
 }
 
 func (s *Server) HandleDbHealth(w http.ResponseWriter, r *http.Request) {
 	jsonResp, _ := json.Marshal(s.db.Health())
-	_, _ = w.Write(jsonResp)
+	_, err := w.Write(jsonResp)
+	if err != nil {
+		log.Printf("error writing response. Err: %v", err)
+		return
+	}
 }
 
 func (s *Server) HandleProviderLogin(w http.ResponseWriter, r *http.Request) {
-	// Logic for handling login with Google will go here
-	log.Println("Login with Google clicked")
+	if u, err := gothic.CompleteUserAuth(w, r); err == nil {
+		log.Printf("User %s already authenticated!", u)
+		return
+	}
+
+	gothic.BeginAuthHandler(w, r)
+}
+
+func (s *Server) HandleProviderCallbackFunction(w http.ResponseWriter, r *http.Request) {
+	u, err := gothic.CompleteUserAuth(w, r)
+	if err != nil {
+		log.Printf("error completing user authentication. Err: %v", err)
+		return
+	}
+	
+	log.Printf("User %s authenticated!", u)
+
+	w.Header().Set("Location", "/")
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }

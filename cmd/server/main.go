@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"referal-system/internal/server"
+	"referal-system/internal/server/auth"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -38,7 +39,8 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 func main() {
 
-	server := server.NewServer()
+	authService := auth.NewAuthService()
+	server := server.NewServer(authService)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

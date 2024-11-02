@@ -10,18 +10,21 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 
 	"referal-system/internal/database"
+	"referal-system/internal/server/auth"
 )
 
 type Server struct {
 	port int
 	db database.DatabaseService
+	authService *auth.AuthService
 }
 
-func NewServer() *http.Server {
+func NewServer(authService *auth.AuthService) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
 		port: port,
 		db: database.New(),
+		authService: authService,
 	}
 
 	// Declare Server config
