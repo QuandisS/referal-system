@@ -14,7 +14,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(middleware.Logger)
 
 	r.Get("/", s.HelloWorldHandler)
-	
 	r.Get("/dbhealth", s.healthHandler)
 
 	return r
